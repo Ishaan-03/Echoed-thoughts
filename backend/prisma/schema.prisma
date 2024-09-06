@@ -22,10 +22,10 @@ posts Post[]
 }
 
 model Post {
-id String  @id @default(uuid())
-title String
-published Boolean @default(false)
-author User @relation(fields: [authorid] , references: [id])
-authorid String
-
+  id        String   @id @default(uuid())
+  title     String
+  content   String?  
+  published Boolean  @default(false)
+  author    User     @relation(fields: [authorid], references: [id])
+  authorid  String
 }
