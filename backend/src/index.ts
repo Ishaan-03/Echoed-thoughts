@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import { sign, verify } from 'hono/jwt';
+import bcrypt from 'bcryptjs';
+import tokenMiddleware from './middlewares/auth';
 
 const app = new Hono<{
   Bindings: {
@@ -12,6 +13,9 @@ const app = new Hono<{
 }>();
 
 const saltRounds = 10;
+
+app.use('/api/v1/blog/*', tokenMiddleware);
+
 
 app.post('/api/v1/user/signup', async (c) => {
   const prisma = new PrismaClient({
@@ -32,7 +36,7 @@ app.post('/api/v1/user/signup', async (c) => {
 
     if (existingUser) {
       console.error('User already exists, unable to sign up');
-      return c.text('User already exists');
+      return c.text('User already exists', 409); 
     }
 
     const newUser = await prisma.user.create({
@@ -43,14 +47,18 @@ app.post('/api/v1/user/signup', async (c) => {
       },
     });
 
-    const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const payload = {
+      userId: newUser.id,
+    };
 
-    return c.json({ token });
+    const token = await sign(payload, JWT_SECRET);
+
+    return c.json({ token }, 201); 
   } catch (error) {
     console.error('Error creating user:', error);
-    return c.text('User creation failed');
+    return c.text('User creation failed', 500);
+  } finally {
+    await prisma.$disconnect(); 
   }
 });
 
@@ -71,21 +79,48 @@ app.post('/api/v1/user/signin', async (c) => {
 
     if (!user) {
       console.error('User not found');
-      return c.text('User not found');
+      return c.text('User not found', 404); 
     }
 
-    if (await bcrypt.compare(body.password, user.password)) {
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
-        expiresIn: '1h',
-      });
+    const passwordMatch = await bcrypt.compare(body.password, user.password);
 
-      return c.json({ token });
-    } else {
-      return c.text('Invalid email or password');
+    if (!passwordMatch) {
+      return c.text('Invalid email or password', 401); 
     }
+
+    const payload = {
+      userId: user.id,
+    };
+
+    const token = await sign(payload, JWT_SECRET);
+
+    return c.json({ token }, 200); 
   } catch (error) {
     console.error('Error signing in:', error);
-    return c.text('Sign in failed');
+    return c.text('Sign in failed', 500); 
+  } finally {
+    await prisma.$disconnect(); 
+  }
+});
+
+app.get('/api/v1/blog/:id', async (c) => {
+  const JWT_SECRET = c.env.JWT_SECRET as string;
+  const token = c.req.header('Authorization')?.replace('Bearer ', '');
+
+  if (!token) {
+    return c.text('Missing token', 401); 
+  }
+
+  try {
+    const verifiedPayload = await verify(token, JWT_SECRET);
+    console.log('Verified payload:', verifiedPayload);
+
+    const id = c.req.param('id');
+    console.log(id);
+    return c.text(`Get blog route for ID: ${id}`);
+  } catch (error) {
+    console.error('Invalid token:', error);
+    return c.text('Invalid token', 403); 
   }
 });
 
@@ -95,12 +130,6 @@ app.post('/api/v1/blog', (c) => {
 
 app.put('/api/v1/blog', (c) => {
   return c.text('Update blog');
-});
-
-app.get('/api/v1/blog/:id', (c) => {
-  const id = c.req.param('id');
-  console.log(id);
-  return c.text('Get blog route');
 });
 
 app.get('/api/v1/blog/bulk', (c) => {
