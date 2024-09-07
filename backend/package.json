@@ -2,10 +2,12 @@
   "name": "backend",
   "scripts": {
     "dev": "wrangler dev src/index.ts",
-    "deploy": "wrangler deploy --minify src/index.ts"
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "main": "src/index.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.2",
+    "@ishaan03/echoed-common": "^1.0.0",
     "@prisma/client": "^5.19.1",
     "@prisma/extension-accelerate": "^1.1.0",
     "bcrypt": "^5.1.1",

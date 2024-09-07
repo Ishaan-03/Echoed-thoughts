@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { verify } from 'hono/jwt';
-import tokenMiddleware from '../middlewares/auth';
 import { PrismaClient } from '@prisma/client/edge';
+import { createBlogInput, updateBlogInput } from "@ishaan03/echoed-common/dist/zod";
+import tokenMiddleware from '../middlewares/auth';
 
 const blogRoutes = new Hono<{
   Bindings: {
@@ -66,8 +66,14 @@ blogRoutes.post('/', async (c) => {
   try {
     const body = await c.req.json();
 
-    if (!body.title || !body.email) {
-      return c.text('Missing required fields', 400);
+    const { success, error } = createBlogInput.safeParse(body);
+    if (!success) {
+      console.error('Invalid input:', error.errors);
+      return c.json({ message: "Invalid input", errors: error.errors }, 400);
+    }
+
+    if (!body.email) {
+      return c.text('Missing author email', 400);
     }
 
     const user = await prisma.user.findUnique({
@@ -103,8 +109,10 @@ blogRoutes.put('/', async (c) => {
   try {
     const body = await c.req.json();
 
-    if (!body.id || !body.title) {
-      return c.text('Missing required fields', 400);
+    const { success, error } = updateBlogInput.safeParse(body);
+    if (!success) {
+      console.error('Invalid input:', error.errors);
+      return c.json({ message: "Invalid input", errors: error.errors }, 400);
     }
 
     const published = body.published === true || body.published === 'true';
