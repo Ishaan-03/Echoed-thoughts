@@ -12,36 +12,57 @@ const blogRoutes = new Hono<{
 
 blogRoutes.use('/*', tokenMiddleware);
 
-blogRoutes.get('/:id', async (c) => {
-  const JWT_SECRET = c.env.JWT_SECRET as string;
-  const token = c.req.header('Authorization')?.replace('Bearer ', '');
+const createPrismaClient = (url: string) => {
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url,
+      },
+    },
+  });
+};
 
-  if (!token) {
-    return c.text('Missing token', 401);
+blogRoutes.get('/bulk', async (c) => {
+  const prisma = createPrismaClient(c.env.DATABASE_URL);
+  try {
+    const blogs = await prisma.post.findMany();
+    return c.json(blogs);
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    return c.text('Failed to fetch blogs', 500);
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
+blogRoutes.get('/:id', async (c) => {
+  const prisma = createPrismaClient(c.env.DATABASE_URL);
+  const id = c.req.param('id');
+
+  if (!id) {
+    return c.text('Missing blog ID', 400);
   }
 
   try {
-    const verifiedPayload = await verify(token, JWT_SECRET);
-    console.log('Verified payload:', verifiedPayload);
+    const blog = await prisma.post.findUnique({
+      where: { id },
+    });
 
-    const id = c.req.param('id');
-    console.log(id);
-    return c.text(`Get blog route for ID: ${id}`);
+    if (!blog) {
+      return c.text('Blog not found', 404);
+    }
+
+    return c.json(blog);
   } catch (error) {
-    console.error('Invalid token:', error);
-    return c.text('Invalid token', 403);
+    console.error('Error fetching blog:', error);
+    return c.text('Failed to fetch blog', 500);
+  } finally {
+    await prisma.$disconnect();
   }
 });
 
 blogRoutes.post('/', async (c) => {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: c.env.DATABASE_URL,
-      },
-    },
-  });
-
+  const prisma = createPrismaClient(c.env.DATABASE_URL);
   try {
     const body = await c.req.json();
 
@@ -50,28 +71,21 @@ blogRoutes.post('/', async (c) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: {
-        email: body.email,
-      },
+      where: { email: body.email },
     });
 
     if (!user) {
       return c.text('Author not found', 404);
     }
 
-    
-    const published = body.published === 'true' || body.published === true;
+    const published = body.published === true || body.published === 'true';
 
-    await prisma.post.create({
+    const newPost = await prisma.post.create({
       data: {
         title: body.title,
-        content: body.content || '', 
+        content: body.content || '',
         published,
-        author: {
-          connect: {
-            id: user.id,
-          },
-        },
+        author: { connect: { id: user.id } },
       },
     });
 
@@ -84,15 +98,8 @@ blogRoutes.post('/', async (c) => {
   }
 });
 
-blogRoutes.put('/update', async (c) => {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: c.env.DATABASE_URL,
-      },
-    },
-  });
-
+blogRoutes.put('/', async (c) => {
+  const prisma = createPrismaClient(c.env.DATABASE_URL);
   try {
     const body = await c.req.json();
 
@@ -100,17 +107,14 @@ blogRoutes.put('/update', async (c) => {
       return c.text('Missing required fields', 400);
     }
 
- 
-    const published = body.published === 'true' || body.published === true;
+    const published = body.published === true || body.published === 'true';
 
     const updatedPost = await prisma.post.update({
-      where: {
-        id: body.id,
-      },
+      where: { id: body.id },
       data: {
         title: body.title,
-        content: body.content || '', 
-        published, 
+        content: body.content || '',
+        published,
       },
     });
 
@@ -123,24 +127,9 @@ blogRoutes.put('/update', async (c) => {
   }
 });
 
-blogRoutes.get('/bulk', async (c) => {
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: c.env.DATABASE_URL,
-      },
-    },
-  });
-
-  try {
-    const blogs = await prisma.post.findMany();
-    return c.json(blogs);
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    return c.text('Failed to fetch blogs', 500);
-  } finally {
-    await prisma.$disconnect();
-  }
+blogRoutes.onError(async (err, c) => {
+  console.error('Unhandled error:', err);
+  return c.text('Internal Server Error', 500);
 });
 
 export default blogRoutes;
