@@ -30,7 +30,18 @@ const createPrismaClient = (url: string) => {
 blogRoutes.get('/bulk', async (c) => {
   const prisma = createPrismaClient(c.env.DATABASE_URL);
   try {
-    const blogs = await prisma.post.findMany();
+    const blogs = await prisma.post.findMany({
+      select: {
+        content : true, 
+        title: true,
+        id: true,
+        author : {
+          select:{
+            Name: true
+          }
+        }
+      }
+    });
     return c.json(blogs);
   } catch (error) {
     console.error('Error fetching blogs:', error);

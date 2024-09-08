@@ -53,7 +53,7 @@ userRoutes.post('/signup', async (c) => {
       data: {
         email: body.email,
         password: hashedPassword,
-        Name: body.Name,
+        Name: body.name,  // Fixed from `body.Name` to `body.name`
       },
     });
 

@@ -1,6 +1,5 @@
-import {  Context } from 'hono';
+import { Context } from 'hono';
 import { verify } from 'hono/jwt';
-
 
 const tokenMiddleware = async (c: Context, next: () => Promise<void>) => {
   const JWT_SECRET = c.env.JWT_SECRET as string;
