@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { createBlogInput, updateBlogInput } from "@ishaan03/echoed-common/dist/zod";
 import tokenMiddleware from '../middlewares/auth';
+import { cors } from 'hono/cors';
 
 const blogRoutes = new Hono<{
   Bindings: {
@@ -9,6 +10,10 @@ const blogRoutes = new Hono<{
     JWT_SECRET: string;
   };
 }>();
+
+blogRoutes.use('/*', cors({
+  origin: '*',
+}));
 
 blogRoutes.use('/*', tokenMiddleware);
 

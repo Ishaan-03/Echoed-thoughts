@@ -3,7 +3,8 @@ import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { sign } from 'hono/jwt';
 import bcrypt from 'bcryptjs';
-import { signupInput, signinInput } from "@ishaan03/echoed-common/dist/zod"
+import { signupInput, signinInput } from "@ishaan03/echoed-common/dist/zod";
+import { cors } from 'hono/cors';
 
 const userRoutes = new Hono<{
   Bindings: {
@@ -13,6 +14,14 @@ const userRoutes = new Hono<{
 }>();
 
 const saltRounds = 10;
+
+userRoutes.use('*', cors({
+  origin: '*', 
+}));
+
+userRoutes.options('*', (c) => {
+  return c.text('Preflight request');
+});
 
 userRoutes.post('/signup', async (c) => {
   const prisma = new PrismaClient({
@@ -75,7 +84,7 @@ userRoutes.post('/signin', async (c) => {
   }
 
   try {
-   const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email: body.email },
     });
 
