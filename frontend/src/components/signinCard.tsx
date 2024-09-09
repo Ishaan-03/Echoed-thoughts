@@ -24,7 +24,7 @@ const SigninForm = () => {
       setSuccess('Signin successful!');
       localStorage.setItem('token', response.data.token);
 
-      navigate('/blog/:'); 
+      navigate('/blog'); 
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data.message || 'Signin failed');

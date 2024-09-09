@@ -1,6 +1,6 @@
 import SigninForm, { Quote } from "../components/signinCard";
 
-const Signup = () => {
+const Signin = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 h-screen">
       <SigninForm />
@@ -9,4 +9,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Signin;

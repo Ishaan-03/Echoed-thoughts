@@ -23,7 +23,7 @@ const SignupForm = () => {
         Name: username,
       });
 
-      navigate('/blog/:1');  
+      navigate('/blog');  
       setSuccess('Signup successful!');
       console.log(response.data); 
     } catch (err) {
