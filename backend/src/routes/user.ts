@@ -53,11 +53,11 @@ userRoutes.post('/signup', async (c) => {
       data: {
         email: body.email,
         password: hashedPassword,
-        Name: body.name,  // Fixed from `body.Name` to `body.name`
+        Name: body.name,  
       },
     });
 
-    const payload = { userId: newUser.id };
+    const payload = { userId: newUser.id, email: newUser.email };
     const token = await sign(payload, JWT_SECRET);
 
     return c.json({ token }, 201);
@@ -98,7 +98,7 @@ userRoutes.post('/signin', async (c) => {
       return c.text('Invalid email or password', 401);
     }
 
-    const payload = { userId: user.id };
+    const payload = { userId: user.id, email: user.email };
     const token = await sign(payload, JWT_SECRET);
 
     return c.json({ token }, 200);
