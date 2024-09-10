@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 
 interface NavbarProps {
   logoUrl: string;
@@ -20,9 +21,11 @@ const Navbar = ({ logoUrl, authorName, sitename, authorAvatar }: NavbarProps) =>
         </span>
       </div>
       <div className="flex items-center">
-        <button className="bg-black text-white px-4 py-2 rounded-lg mr-4">
-          Publish
+       <Link to={'/publish'}>
+       <button className="bg-black text-white px-4 py-2 rounded-lg mr-4">
+          Create Blog 
         </button>
+       </Link>
         {authorAvatar ? (
           <img
             src={authorAvatar}

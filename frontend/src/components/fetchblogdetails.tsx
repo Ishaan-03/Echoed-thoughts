@@ -47,9 +47,10 @@ const BlogDetailsPage = () => {
     <DetailedBlogPost
       title={blog.title}
       authorName={blog.author?.name || 'Anonymous'}
-      authorBio={blog.author?.bio || 'No bio available'}
+      authorBio={blog.author?.bio || 'An impactor on Echoed Thoughts'}
       content={blog.content}
       publishedDate={new Date(blog.createdAt).toLocaleDateString()}
+      
     />
   );
 };

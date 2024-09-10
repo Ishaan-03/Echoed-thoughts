@@ -4,6 +4,7 @@ import Blog from './pages/blog';
 import Signup from './pages/signup';
 import Signin from './pages/signin';
 import HomePage from './pages/home';
+import PublishBlog from './pages/publishblog';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/signin" element={<Signin />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/publish" element={<PublishBlog />} />
           <Route path="/blog/:id" element={<BlogDetailsPage />} />
           
         </Routes>
